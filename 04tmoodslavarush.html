@@ -1,0 +1,307 @@
+<iframe width="0" height="0" src="https://www.youtube.com/embed/30yJaTphRyE?rel=0&autoplay=1" frameborder="0"
+    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<p style="line-height: 18px; font-size: 18px;  font-family: times;">
+<p id='text'></p>
+<canvas id="Canvas" width="480" height="360"></canvas>
+<p id='text2'></p><b>Difficulty (0.1 - 5.0): </b>
+<input id='num'></input>
+<script>
+    var c = document.getElementById("Canvas");
+    var ctx = c.getContext("2d");
+    document.getElementById('num').value = 1;
+    var difficulty = 0.5;
+    function move(x) {
+        if (x.keyCode == 39) { moveright = 1; }
+        else if (x.keyCode == 37) { moveleft = 1; }
+        else if (x.keyCode == 38) { moveup = 1; }
+        else if (x.keyCode == 40) { movedown = 1; };
+    };
+    function noMove(x) { if (x.keyCode == 39) { moveright = 0; } else if (x.keyCode == 37) { moveleft = 0; } else if (x.keyCode == 38) { moveup = 0; } else if (x.keyCode == 40) { movedown = 0; }; };
+    var moveright = 0;
+    var moveleft = 0;
+    var moveup = 0;
+    var movedown = 0;
+    var speed = 1;
+    document.addEventListener("keydown", move, false);
+    document.addEventListener("keyup", noMove, false);
+
+    var moving = false
+    var high = 0
+
+    function tick() {
+        if ((15 + (0 - scrolly)) > high) {
+            high = (15 + (0 - scrolly))
+        }
+        platforms()
+        update()
+        if (moveright === 1) {
+            xv += 1
+        }
+        if (moveleft === 1) {
+            xv -= 1
+        }
+        if (xv > 0) { moving = true }
+        else { moving = false }
+        xv = xv * 0.9
+        x += xv
+        update()
+        if (touching.includes(1)) {
+            y += 1
+            update()
+            if (touching.includes(1)) {
+                y += 1
+                update()
+                if (touching.includes(1)) {
+                    y += 1
+                    update()
+                    if (touching.includes(1)) {
+                        y += 1
+                        update()
+                        if (touching.includes(1)) {
+                            y += 1
+                            update()
+                            if (touching.includes(1)) {
+                                x -= xv
+                                y -= 5
+                                xv = 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        update()
+        yv -= 1
+        y += yv
+        update()
+        if (touching.includes(1)) {
+            y -= yv
+            yv = 0
+        }
+        update()
+        y -= 1
+        update()
+        if (touching.includes(1)) {
+            if (moveup === 1) {
+                yv = 15
+            }
+        }
+        update()
+        if (touching.includes(2)) {
+            yv = 20
+        }
+        update()
+        if (touching.includes(3) || scrolly > 500) {
+            reset()
+        }
+        update()
+        y += 1
+        scrolling()
+        if (scrollx < checkpoints[cp + 1]['x'] && scrolly - 20 < checkpoints[cp + 1]['y']) { //>
+            cp += 1
+            checkpoint = checkpoints[cp]
+        }
+        lava += 1
+    }
+
+    function platforms() {
+        var j = 0
+        while (level.length > j) {
+            level[j]['x'] += level[j]['xv']
+            level[j]['y'] += 1
+            if (x < level[j]['x'] + level[j]['width'] + scrollx && x + 20 > level[j]['x'] + scrollx && y < level[j]['y'] + level[j]['height'] + scrolly && y + 20 > level[j]['y'] + scrolly) {
+                //if (!level[j]['on_mp']) {level[j]['on_mp']=true,xv=0}
+                if (moving) { level[j]['y'] -= 1 }
+                x += level[j]['xv']
+                var kill = false
+                i = 0
+                if (!moving) { level[j]['y'] -= 1 }
+                while (level.length > i) {
+                    if (x < level[i]['x'] + level[i]['width'] + scrollx && x + 20 > level[i]['x'] + scrollx && y < level[i]['y'] + level[i]['height'] + scrolly && y + 20 > level[i]['y'] + scrolly) {
+                        if (level[j]['type'] === 1) { kill = true }
+                    }
+                    i++
+                }
+                if (kill) {
+                    reset()
+                }
+            } else { level[j]['y'] -= 1; level[j]['on_mp'] = false }
+            if (level[j]['x'] > level[j]['maxx']) {
+                level[j]['x'] = level[j]['maxx']
+                level[j]['xv'] = 0 - Math.abs(level[j]['xv'])
+            }
+            if (level[j]['minx'] > level[j]['x']) {
+                level[j]['x'] = level[j]['minx']
+                level[j]['xv'] = Math.abs(level[j]['xv'])
+            }
+            level[j]['y'] += level[j]['yv']
+            if (x < level[j]['x'] + level[j]['width'] + scrollx && x + 20 > level[j]['x'] + scrollx && y < level[j]['y'] + level[j]['height'] + scrolly && y + 20 > level[j]['y'] + scrolly) {
+                y += level[j]['yv']
+                var kill = false
+                i = 0
+                while (level.length > i) {
+                    if (x < level[i]['x'] + level[i]['width'] + scrollx && x + 20 > level[i]['x'] + scrollx && y < level[i]['y'] + level[i]['height'] + scrolly && y + 20 > level[i]['y'] + scrolly) {
+                        if (level[j]['type'] === 1) { kill = true }
+                    }
+                    i++
+                }
+                if (kill) {
+                    reset()
+                }
+            }
+            if (level[j]['y'] > level[j]['maxy']) {
+                level[j]['y'] = level[j]['maxy']
+                level[j]['yv'] = 0 - Math.abs(level[j]['yv'])
+            }
+            if (level[j]['miny'] > level[j]['y']) {
+                level[j]['y'] = level[j]['miny']
+                level[j]['yv'] = Math.abs(level[j]['yv'])
+            }
+            j++
+        }
+    }
+
+    function reset() {
+        xv = 0
+        yv = 0
+        x = 0
+        y = 0
+        scrollx = checkpoint['x']
+        scrolly = checkpoint['y']
+        var k = 0
+        while (level.length > k) {
+            level[k]['x'] = level[k]['minx']
+            level[k]['y'] = level[k]['miny']
+            level[k]['xv'] = Math.abs(level[k]['xv'])
+            level[k]['yv'] = Math.abs(level[k]['yv'])
+            k++
+        }
+    }
+
+    function update(drawing = true) {
+        difficulty = document.getElementById("num").value / 2
+        touching = []
+        if (drawing) {
+            ctx.fillStyle = "aqua"
+            ctx.fillRect(0, 0, c.width, c.height)
+            draw()
+        }
+        i = 0
+        while (level.length > i) {
+            if (level[i]['type'] === 3) { level[i]['yv'] = difficulty }
+            if (x < level[i]['x'] + level[i]['width'] + scrollx && x + 20 > level[i]['x'] + scrollx && y < level[i]['y'] + level[i]['height'] + scrolly && y + 20 > level[i]['y'] + scrolly) {
+                if (!(touching.includes(level[i]['type']))) {
+                    touching.push(level[i]['type'])
+                }
+                if (level[i]['type'] === 4 && !(level[i]['hidden'])) {
+                    level[i]['hidden'] = true
+                    coins += 1
+                }
+            }
+            i++
+        }
+    }
+
+    function draw() {
+        var colors = ['red', 'black', 'lawngreen', 'orange', 'yellow']
+        ctx.lineWidth = 5
+        i = 0
+        while (level.length > i) {
+            if (!level[i]['hidden']) {
+                ctx.strokeStyle = colors[level[i]['type']]
+                ctx.strokeStyle = level[i]['color']
+                if (level[i]['type'] != 4) {
+                    ctx.strokeRect(
+                        scrollx + level[i]['x'] + 245,
+                        360 - (scrolly + level[i]['y'] + 180),
+                        level[i]['width'] - 10,
+                        0 - (level[i]['height'] - 5))
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(scrollx + level[i]['x'] + 255, 360 - (scrolly + level[i]['y'] + 185), 10, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            }
+            i++
+        }
+        ctx.strokeStyle = "blue"
+        ctx.strokeRect(x + 240, 360 - (y + 180), 20, -20)
+        ctx.font = "20px Arial";
+        ctx.fillStyle = '#222222'
+        ctx.fillText("Score: " + (15 + (0 - scrolly)), 350, 30);
+        ctx.fillText("High: " + high, 350, 60);
+
+    }
+
+    function scrolling() {
+        //scrollx-=Math.round(x/10)
+        //x-=Math.round(x/10)
+        scrolly -= Math.round(y / 10)
+        y -= Math.round(y / 10)
+    }
+
+    function addrect(xpos, ypos, width, height, type, maxx = 'a', maxy = 'a', xvel = 0, yvel = 0, color = 0) {
+        if (maxx === 'a') { maxx = xpos }
+        if (maxy === 'a') { maxy = ypos }
+        level.push({ 'x': xpos, 'y': ypos, 'width': width, 'height': height, 'type': type, 'minx': xpos, 'miny': ypos, 'maxx': maxx, 'maxy': maxy, 'xv': xvel, 'yv': yvel, 'hidden': false, 'color': color, 'on_mp': false })
+    }
+
+    function addcp(cx, cy) {
+        checkpoints.push({ 'x': cx, 'y': cy })
+    }
+
+    var checkpoints = []
+    addcp(0, 0)
+    addcp(-1000, -20)
+    addcp(-1700, -20)
+    addcp(-2800, -20)
+    addcp(-1000000, -10000000)
+    cp = 0
+    checkpoint = checkpoints[cp]
+
+    var coins = 0
+
+    function random(a, b) {
+        return Math.floor(Math.random() * (b + 1)) + a
+    }
+
+    var level = []
+    addrect(-150, -50, 300, 30, 1)
+    //addrect(-1000,220,850,20,1,-800,50,3,0)
+    //addrect(-50,220,850,20,1,150,50,3,0)
+    var i = 20
+    while (10000 > i) {
+        if (random(1, 5) != 1) {
+            var size = random(40, 60)
+            addrect(-150, i, size, 20, 1, 150 - size, 50, (random(4, 16) / 4), 0)
+        } else {
+            var spd = (random(4, 16) / 4)
+            addrect(-1000, i, 850, 20, 1, -800, 50, spd, 0)
+            addrect(-50, i, 850, 20, 1, 150, 50, spd, 0)
+        }
+        i += 60
+    }
+
+    var i = -100
+    color_shift = Math.floor(7518 / (700 / 9))
+    C = 7518
+    while (i > -800) {
+        co = C + ''
+        addrect(-500, i, 1000, 10, 3, -500, 1000000, 0, 0.5, '#ff' + co)
+        i = i - 9
+        C -= color_shift
+    }
+
+    var touching = []
+    var xv = 0
+    var yv = 0
+    var x = 0
+    var y = 0
+    var scrollx = 0
+    var scrolly = 0
+    var lava = -100
+
+    setInterval(tick, 25)
+
+
+</script>
